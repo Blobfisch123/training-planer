@@ -1630,22 +1630,24 @@ function renderHistoryEntry(log) {
 
   return `<div class="history-entry" id="hentry-${log.id}">
     <div class="history-header" onclick="toggleHistoryEntry('${log.id}')">
-      <div style="display:flex;align-items:center;gap:14px;flex:1;min-width:0;">
-        <div style="flex-shrink:0;">
+      <!-- Zeile 1: Datum + Buttons immer auf einer Linie -->
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;">
+        <div style="min-width:0;">
           <div style="font-size:17px;font-weight:800;">${formatDate(log.date)}</div>
-          <div style="font-size:12px;color:var(--text2);">${log.planName}</div>
+          <div style="font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(log.planName)}</div>
         </div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;">
-          <span class="badge badge-gray">${exCount} Übungen</span>
-          <span class="badge badge-gray">${totalSets} Sätze</span>
-          ${totalVol > 0 ? `<span class="badge badge-blue">${(totalVol/1000).toFixed(1)} t Volumen</span>` : ''}
-          ${log.duration ? `<span class="badge badge-gray">⏱ ${log.duration} Min.</span>` : ''}
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();viewWorkoutLog('${log.id}')">Details</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteWorkoutLog('${log.id}')">Löschen</button>
+          <svg class="history-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;transition:transform 0.2s;flex-shrink:0;"><path d="M6 9l6 6 6-6"/></svg>
         </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();viewWorkoutLog('${log.id}')">Details</button>
-        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteWorkoutLog('${log.id}')">Löschen</button>
-        <svg class="history-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;transition:transform 0.2s;flex-shrink:0;"><path d="M6 9l6 6 6-6"/></svg>
+      <!-- Zeile 2: Badges immer unter dem Datum -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+        <span class="badge badge-gray">${exCount} Übungen</span>
+        <span class="badge badge-gray">${totalSets} Sätze</span>
+        ${totalVol > 0 ? `<span class="badge badge-blue">${(totalVol/1000).toFixed(1)} t Volumen</span>` : ''}
+        ${log.duration ? `<span class="badge badge-gray">⏱ ${log.duration} Min.</span>` : ''}
       </div>
     </div>
     <div class="history-body" id="hbody-${log.id}" style="display:none;">

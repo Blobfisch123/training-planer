@@ -394,7 +394,7 @@ tr:last-child td { border-bottom: none; }
 .history-entry { border-bottom: 1px solid var(--border); }
 .history-entry:last-child { border-bottom: none; }
 .history-header {
-  display: flex; align-items: center; gap: 12px;
+  display: flex; flex-direction: column; gap: 0;
   padding: 14px 4px; cursor: pointer;
   transition: background var(--transition);
   border-radius: var(--radius-sm);
