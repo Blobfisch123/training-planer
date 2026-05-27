@@ -607,11 +607,15 @@ select.form-control { min-height: 48px; }
      Notch (iPhone X–13):             ~44 pt
      Kein Ausschnitt:                   0 pt  */
 
-  /* Content: top = Dynamic Island, bottom = Bottom-Nav-Höhe (56px) + Home-Indikator */
+  /* App-Layout endet genau dort wo die Bottom-Nav beginnt —
+     kein Overlap mehr, kein Padding-Trick nötig */
+  .app-layout {
+    height: calc(100dvh - 56px - env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Content: nur noch normaler Innenabstand, kein Extra für die Nav */
   #content {
-    padding: calc(16px + env(safe-area-inset-top, 0px))
-             16px
-             calc(56px + 16px + env(safe-area-inset-bottom, 0px));
+    padding: calc(16px + env(safe-area-inset-top, 0px)) 16px 24px;
   }
 
   /* Loading screen: zentriert, aber nicht hinter die Insel */
