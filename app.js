@@ -1453,15 +1453,38 @@ function renderWorkoutPicker(plans, todayPlanIds) {
   if (plans.length === 0) {
     return `<div class="card"><div class="empty-state"><p>Zuerst Pläne erstellen.</p><button class="btn btn-primary" onclick="navigate('plans')">Pläne erstellen</button></div></div>`;
   }
-  // Pre-select: first today's plan if available, otherwise first plan
   const defaultId = todayPlanIds.length > 0 ? todayPlanIds[0] : plans[0].id;
+  const folders   = state.data.planFolders || [];
+
+  // Pläne die nicht heute geplant sind, nach Ordner aufteilen
+  const otherPlans = plans.filter(p => !todayPlanIds.includes(p.id));
+
+  // Ordner-Gruppen aufbauen
+  let folderOptgroups = '';
+  folders.forEach(f => {
+    const fp = otherPlans.filter(p => p.folderId === f.id);
+    if (!fp.length) return;
+    folderOptgroups += `<optgroup label="${escHtml(f.name)}">
+      ${fp.map(p => `<option value="${p.id}">${escHtml(p.name)}</option>`).join('')}
+    </optgroup>`;
+  });
+
+  // Pläne ohne Ordner
+  const unfoldered = otherPlans.filter(p => !p.folderId || !folders.find(f => f.id === p.folderId));
+  const unfolderedGroup = unfoldered.length
+    ? (folders.length
+        ? `<optgroup label="Ohne Ordner">${unfoldered.map(p => `<option value="${p.id}">${escHtml(p.name)}</option>`).join('')}</optgroup>`
+        : unfoldered.map(p => `<option value="${p.id}">${escHtml(p.name)}</option>`).join(''))
+    : '';
+
   return `
     <div class="card" style="max-width:520px;">
       <div class="form-group">
         <label class="form-label">Plan auswählen</label>
         <select class="form-control" id="workout-plan-select" onchange="updateWorkoutPreview(this.value)">
           ${todayPlanIds.length > 0 ? `<optgroup label="── Heute geplant ──">${todayPlanIds.map(id => { const p = getPlan(id); return p ? `<option value="${p.id}" ${p.id===defaultId?'selected':''}>${escHtml(p.name)}</option>` : ''; }).join('')}</optgroup>` : ''}
-          <optgroup label="── Alle Pläne ──">${plans.filter(p => !todayPlanIds.includes(p.id)).map(p => `<option value="${p.id}">${escHtml(p.name)}</option>`).join('')}</optgroup>
+          ${folderOptgroups}
+          ${unfolderedGroup}
         </select>
       </div>
 
