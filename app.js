@@ -1903,6 +1903,23 @@ function openAddCustomExercise() {
       <input class="form-control" id="cex-muscles" placeholder="z.B. Bizeps, Unterarm">
     </div>
     <div class="form-group">
+      <label class="form-label">Messmethode</label>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+        <label class="checkbox-item" style="cursor:pointer;">
+          <input type="radio" name="cex-tracking" value="weight" checked>
+          <span><strong>Sätze · Wdh. · Gewicht</strong> — Krafttraining, Geräte</span>
+        </label>
+        <label class="checkbox-item" style="cursor:pointer;">
+          <input type="radio" name="cex-tracking" value="cardio">
+          <span><strong>Distanz (km) · Zeit (min)</strong> — Laufen, Radfahren, Schwimmen</span>
+        </label>
+        <label class="checkbox-item" style="cursor:pointer;">
+          <input type="radio" name="cex-tracking" value="timed">
+          <span><strong>Sätze · Dauer (Sek.)</strong> — Plank, isometrische Übungen</span>
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
       <label class="form-label">Kurzbeschreibung / Ausführung</label>
       <textarea class="form-control" id="cex-desc" rows="3" placeholder="Erkläre kurz wie die Übung ausgeführt wird…"></textarea>
     </div>
@@ -1928,6 +1945,7 @@ function saveCustomExercise() {
   const name = document.getElementById('cex-name').value.trim();
   if (!name) { toast('Bitte einen Namen eingeben.','error'); return; }
   const riskParts = BODY_PARTS.filter(bp => document.getElementById(`cex-bp-${bp}`).checked);
+  const trackingType = (document.querySelector('input[name="cex-tracking"]:checked') || {}).value || 'weight';
   const ex = {
     id: 'c' + uuid(),
     name,
@@ -1935,6 +1953,7 @@ function saveCustomExercise() {
     eq: document.getElementById('cex-eq').value.trim() || 'Sonstige',
     muscles: document.getElementById('cex-muscles').value.split(',').map(s=>s.trim()).filter(Boolean),
     desc: document.getElementById('cex-desc').value.trim(),
+    trackingType,
     riskParts
   };
   if (!state.data.customExercises) state.data.customExercises = [];
