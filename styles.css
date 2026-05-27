@@ -350,6 +350,28 @@ tr:last-child td { border-bottom: none; }
 .set-done.checked { background: var(--success); border-color: var(--success); }
 .set-done svg { width: 14px; height: 14px; }
 
+/* ===== WORKOUT TIMER ===== */
+.timer-btn {
+  padding: 4px 10px; border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  border: 1.5px solid var(--accent); color: var(--accent);
+  background: transparent; font-family: inherit;
+  transition: all var(--transition); white-space: nowrap;
+}
+.timer-btn:hover { background: var(--accent); color: #fff; }
+.timer-btn.timer-running {
+  background: var(--accent); color: #fff;
+  animation: timer-pulse 1s ease-in-out infinite;
+}
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+.timer-display {
+  font-size: 15px; font-variant-numeric: tabular-nums;
+  min-width: 36px; text-align: center;
+}
+
 /* ===== MODAL ===== */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 100;

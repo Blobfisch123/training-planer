@@ -1369,6 +1369,69 @@ function deleteDayType(id) {
 }
 
 // ============================================================
+// WORKOUT-TIMER
+// ============================================================
+let _workoutTimer = null; // { exIdx, sIdx, remaining, intervalId }
+
+function toggleWorkoutTimer(exIdx, sIdx) {
+  if (_workoutTimer && _workoutTimer.exIdx === exIdx && _workoutTimer.sIdx === sIdx) {
+    stopWorkoutTimer();
+  } else {
+    startWorkoutTimer(exIdx, sIdx);
+  }
+}
+
+function startWorkoutTimer(exIdx, sIdx) {
+  stopWorkoutTimer();
+  const set = state.activeWorkout?.exercises?.[exIdx]?.sets?.[sIdx];
+  if (!set) return;
+  const duration = parseInt(set.duration) || 60;
+  _workoutTimer = { exIdx, sIdx, remaining: duration };
+  updateTimerDOM();
+  _workoutTimer.intervalId = setInterval(() => {
+    if (!_workoutTimer) return;
+    _workoutTimer.remaining--;
+    if (_workoutTimer.remaining <= 0) {
+      _workoutTimer.remaining = 0;
+      updateTimerDOM();
+      stopWorkoutTimer();
+      // Satz automatisch abhaken
+      const s = state.activeWorkout?.exercises?.[exIdx]?.sets?.[sIdx];
+      if (s && !s.completed) { s.completed = true; renderWorkout(); }
+      if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
+      toast('Zeit abgelaufen!', 'success');
+    } else {
+      updateTimerDOM();
+    }
+  }, 1000);
+}
+
+function stopWorkoutTimer() {
+  if (_workoutTimer?.intervalId) clearInterval(_workoutTimer.intervalId);
+  _workoutTimer = null;
+  document.querySelectorAll('.timer-btn').forEach(b => {
+    b.textContent = 'Start'; b.classList.remove('timer-running');
+  });
+  document.querySelectorAll('.timer-display').forEach(el => {
+    el.textContent = ''; el.style.color = '';
+  });
+}
+
+function updateTimerDOM() {
+  if (!_workoutTimer) return;
+  const { exIdx, sIdx, remaining } = _workoutTimer;
+  const btn = document.getElementById(`timer-btn-${exIdx}-${sIdx}`);
+  const disp = document.getElementById(`timer-display-${exIdx}-${sIdx}`);
+  if (btn) { btn.textContent = 'Stop'; btn.classList.add('timer-running'); }
+  if (disp) {
+    const m = Math.floor(remaining / 60), s = remaining % 60;
+    disp.textContent = m > 0 ? `${m}:${String(s).padStart(2,'0')}` : `${s}s`;
+    disp.style.color = remaining <= 10 ? 'var(--danger)' : 'var(--accent)';
+    disp.style.fontWeight = '700';
+  }
+}
+
+// ============================================================
 // TRAINING STARTEN
 // ============================================================
 function renderWorkout() {
@@ -1382,6 +1445,8 @@ function renderWorkout() {
     </div>
     ${state.activeWorkout ? renderActiveWorkout() : renderWorkoutPicker(plans, todayPlanIds)}
   </div>`;
+  // Timer-Anzeige nach Re-Render wiederherstellen
+  updateTimerDOM();
 }
 
 function renderWorkoutPicker(plans, todayPlanIds) {
@@ -1492,7 +1557,7 @@ function renderActiveWorkout() {
     const headerRow = type === 'cardio'
       ? `<div class="set-row"><span>Nr.</span><span>km</span><span>min</span><span>km/h</span><span></span></div>`
       : type === 'timed'
-      ? `<div class="set-row"><span>Satz</span><span>Sek.</span><span></span><span></span><span></span></div>`
+      ? `<div class="set-row"><span>Satz</span><span>Ziel (s)</span><span>Timer</span><span>Zeit</span><span></span></div>`
       : `<div class="set-row"><span>Satz</span><span>Wdh.</span><span>kg</span><span>Vol.</span><span></span></div>`;
 
     const setRowsHtml = ex.sets.map((set, sIdx) => {
@@ -1510,10 +1575,20 @@ function renderActiveWorkout() {
         </div>`;
       }
       if (type === 'timed') {
+        const isActive = _workoutTimer?.exIdx === exIdx && _workoutTimer?.sIdx === sIdx;
+        const m = isActive ? Math.floor(_workoutTimer.remaining/60) : 0;
+        const s2 = isActive ? _workoutTimer.remaining % 60 : 0;
+        const timerLabel = isActive
+          ? (m > 0 ? `${m}:${String(s2).padStart(2,'0')}` : `${s2}s`)
+          : '';
         return `<div class="set-row">
           <span class="set-num">${sIdx+1}</span>
           <input class="set-input" type="number" min="1" step="5" value="${set.duration||60}" onchange="updateSet(${exIdx},${sIdx},'duration',this.value)">
-          <span></span><span></span>${check}
+          <button id="timer-btn-${exIdx}-${sIdx}" class="timer-btn${isActive?' timer-running':''}"
+            onclick="toggleWorkoutTimer(${exIdx},${sIdx})">${isActive?'Stop':'Start'}</button>
+          <span id="timer-display-${exIdx}-${sIdx}" class="timer-display"
+            style="${isActive ? `color:${_workoutTimer.remaining<=10?'var(--danger)':'var(--accent)'};font-weight:700;` : ''}">${timerLabel}</span>
+          ${check}
         </div>`;
       }
       return `<div class="set-row">
@@ -1585,6 +1660,7 @@ function addWorkoutSet(exIdx) {
 }
 
 function finishWorkout() {
+  stopWorkoutTimer();
   const w = state.activeWorkout;
   if (!w) return;
   const log = {
@@ -1609,6 +1685,7 @@ function finishWorkout() {
 
 function cancelWorkout() {
   if (!confirm('Training abbrechen? Fortschritt geht verloren.')) return;
+  stopWorkoutTimer();
   state.activeWorkout = null;
   state.workoutStartTime = null;
   renderWorkout();
