@@ -629,4 +629,9 @@ select.form-control { min-height: 48px; }
   /* Week nav: full width buttons */
   .week-nav { gap: 8px; }
   .week-nav .btn { flex: 1; justify-content: center; }
+
+  /* Week day cells: wrap add-dropdown into its own row */
+  .day-cell { flex-wrap: wrap; align-items: center; padding: 10px 12px; gap: 8px; }
+  .day-actions { width: 100%; }
+  .day-actions select { min-width: 0 !important; width: 100%; font-size: 14px; }
 }
