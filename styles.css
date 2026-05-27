@@ -630,8 +630,14 @@ select.form-control { min-height: 48px; }
   .week-nav { gap: 8px; }
   .week-nav .btn { flex: 1; justify-content: center; }
 
-  /* Week day cells: wrap add-dropdown into its own row */
-  .day-cell { flex-wrap: wrap; align-items: center; padding: 10px 12px; gap: 8px; }
-  .day-actions { width: 100%; }
-  .day-actions select { min-width: 0 !important; width: 100%; font-size: 14px; }
+  /* Week day cells: dropdown wraps into own row, no overflow */
+  .day-cell { flex-wrap: wrap; gap: 6px; padding: 10px 12px; }
+  .day-date { font-size: 20px; min-width: 28px; }
+  .day-actions { width: 100%; min-width: 0 !important; margin-left: 0; }
+  .day-actions select { min-width: 0 !important; min-height: 40px; width: 100%; }
+
+  /* Prevent horizontal overflow globally on mobile */
+  body { overflow-x: hidden; }
+  .main-content { overflow-x: hidden; }
+  #content { overflow-x: hidden; }
 }
