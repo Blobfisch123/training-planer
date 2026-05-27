@@ -581,12 +581,14 @@ function renderPlans() {
 
 function renderPlanCard(plan, folders) {
   folders = folders || state.data.planFolders || [];
-  const cats = [...new Set((plan.exercises||[]).map(e => {
+  const exList = plan.exercises || [];
+
+  const cats = [...new Set(exList.map(e => {
     const ex = getExercise(e.exerciseId);
     return ex ? ex.cat : '';
   }).filter(Boolean))];
 
-  const hasInjury = (plan.exercises||[]).some(e => {
+  const hasInjury = exList.some(e => {
     const ex = getExercise(e.exerciseId);
     return ex && isExerciseRisky(ex);
   });
@@ -595,13 +597,44 @@ function renderPlanCard(plan, folders) {
     `<option value="${f.id}" ${plan.folderId === f.id ? 'selected' : ''}>${escHtml(f.name)}</option>`
   ).join('');
 
+  // Übungsvorschau: bis zu 5 Einträge, Rest als "+ X weitere"
+  const PREVIEW_MAX = 5;
+  const previewItems = exList.slice(0, PREVIEW_MAX).map(e => {
+    const ex = getExercise(e.exerciseId);
+    if (!ex) return '';
+    const type = getTrackingType(ex);
+    let detail = '';
+    if (type === 'cardio') {
+      detail = e.sets > 1 ? `${e.sets}× ${e.targetDistance||0} km` : `${e.targetDistance||0} km`;
+    } else if (type === 'timed') {
+      detail = `${e.sets}× ${e.duration||30} s`;
+    } else {
+      detail = `${e.sets}× ${e.reps||'?'}`;
+    }
+    const risky = isExerciseRisky(ex);
+    return `<div class="plan-card-ex-row">
+      <span class="plan-card-ex-dot" style="background:${risky ? 'var(--warn)' : 'var(--accent)'}"></span>
+      <span class="plan-card-ex-name">${escHtml(ex.name)}</span>
+      <span class="plan-card-ex-detail">${detail}</span>
+    </div>`;
+  }).filter(Boolean).join('');
+
+  const overflow = exList.length > PREVIEW_MAX
+    ? `<div style="font-size:12px;color:var(--text3);padding:4px 0 2px 18px;">+ ${exList.length - PREVIEW_MAX} weitere</div>`
+    : '';
+
+  const exPreview = exList.length > 0
+    ? `<div class="plan-card-ex-list">${previewItems}${overflow}</div>`
+    : `<div class="plan-card-ex-empty">Noch keine Übungen</div>`;
+
   return `<div class="plan-card" onclick="openPlanEditor('${plan.id}')">
     <div class="plan-card-name">${escHtml(plan.name)} ${hasInjury ? '<span class="badge badge-warn" style="font-size:10px;">!</span>' : ''}</div>
     <div class="plan-card-meta">
-      <span>${(plan.exercises||[]).length} Übungen</span>
+      <span>${exList.length} Übungen</span>
       ${plan.description ? `<span>${plan.description.slice(0,40)}${plan.description.length>40?'…':''}</span>` : ''}
     </div>
-    <div class="plan-card-tags">
+    ${exPreview}
+    <div class="plan-card-tags" style="margin-top:10px;">
       ${cats.map(c => `<span class="badge badge-blue">${c}</span>`).join('')}
     </div>
     <div class="plan-card-actions" onclick="event.stopPropagation()">

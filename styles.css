@@ -209,6 +209,27 @@ tr:last-child td { border-bottom: none; }
 .plan-card-meta { font-size: 12px; color: var(--text2); display: flex; gap: 16px; margin-bottom: 10px; }
 .plan-card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
 .plan-card-actions { display: flex; gap: 8px; margin-top: 14px; }
+.plan-card-ex-list {
+  display: flex; flex-direction: column; gap: 5px;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  padding: 8px 0; margin: 8px 0;
+}
+.plan-card-ex-row {
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+}
+.plan-card-ex-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.plan-card-ex-name {
+  font-size: 13px; color: var(--text); flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.plan-card-ex-detail {
+  font-size: 12px; color: var(--text2); flex-shrink: 0; font-variant-numeric: tabular-nums;
+}
+.plan-card-ex-empty {
+  font-size: 12px; color: var(--text3); padding: 6px 0; font-style: italic;
+}
 
 /* ===== PLAN FOLDERS ===== */
 .folder-section { margin-bottom: 24px; }
