@@ -598,8 +598,28 @@ select.form-control { min-height: 48px; }
   /* Hide sidebar entirely */
   .sidebar { display: none; }
 
-  /* Content: full width, space for bottom nav */
-  #content { padding: 16px 16px calc(72px + env(safe-area-inset-bottom)); }
+  /* ── Safe-area / Dynamic Island ──
+     env(safe-area-inset-top) liefert automatisch den richtigen Wert:
+     Dynamic Island (iPhone 14 Pro+): ~59 pt
+     Notch (iPhone X–13):             ~44 pt
+     Kein Ausschnitt:                   0 pt  */
+
+  /* Content: top = Dynamic Island, bottom = Home-Indikator + Bottom-Nav */
+  #content {
+    padding: calc(16px + env(safe-area-inset-top))
+             16px
+             calc(72px + env(safe-area-inset-bottom));
+  }
+
+  /* Loading screen: zentriert, aber nicht hinter die Insel */
+  #loading-screen { padding-top: env(safe-area-inset-top); }
+
+  /* Auth card: schiebt Inhalt unter die Insel */
+  #auth-screen { padding-top: env(safe-area-inset-top); }
+  .auth-card {
+    width: 100%; max-width: 100%; border-radius: 0;
+    min-height: 100dvh; justify-content: center; border: none;
+  }
 
   /* Modal: slide up from bottom as a sheet */
   .modal-overlay { align-items: flex-end; }
@@ -607,24 +627,18 @@ select.form-control { min-height: 48px; }
     width: 100%; max-width: 100%; margin: 0;
     border-radius: 20px 20px 0 0;
     padding: 20px 20px calc(24px + env(safe-area-inset-bottom));
-    max-height: 88vh;
+    max-height: 88dvh;
   }
+
+  /* More-menu: already uses env(safe-area-inset-bottom) */
 
   /* Collapse grids to single column */
   .grid-3, .grid-2 { grid-template-columns: 1fr; gap: 12px; }
   .form-row { grid-template-columns: 1fr; }
   .form-row-3 { grid-template-columns: 1fr 1fr; }
 
-  /* Auth card: full width */
-  .auth-card { width: 100%; max-width: 100%; border-radius: 0;
-    min-height: 100vh; justify-content: center; border: none; }
-
   /* Page title spacing */
   .page-title { font-size: 20px; }
-
-  /* Week: keep column layout but tighter */
-  .day-cell { padding: 10px 14px; }
-  .day-label { font-size: 13px; min-width: 80px; }
 
   /* Week nav: full width buttons */
   .week-nav { gap: 8px; }
@@ -636,7 +650,7 @@ select.form-control { min-height: 48px; }
   .day-actions { width: 100%; min-width: 0 !important; margin-left: 0; }
   .day-actions select { min-width: 0 !important; min-height: 40px; width: 100%; }
 
-  /* Prevent horizontal overflow globally on mobile */
+  /* Prevent horizontal overflow */
   body { overflow-x: hidden; }
   .main-content { overflow-x: hidden; }
   #content { overflow-x: hidden; }
