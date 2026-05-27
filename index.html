@@ -27,28 +27,18 @@
         <div class="auth-logo-icon">🏋️</div>
         <div class="auth-logo-title">TrainingPlaner</div>
       </div>
-      <div class="auth-tabs">
-        <div class="auth-tab active" data-tab="login" onclick="showAuthTab('login')">Anmelden</div>
-        <div class="auth-tab" data-tab="register" onclick="showAuthTab('register')">Registrieren</div>
-      </div>
-      <div id="auth-name-group" class="form-group" style="display:none;">
-        <label class="form-label">Name</label>
-        <input class="form-control" id="auth-name" type="text" placeholder="Dein Name">
-      </div>
       <div class="form-group">
-        <label class="form-label">E-Mail</label>
-        <input class="form-control" id="auth-email" type="email" placeholder="deine@email.com"
-          onkeydown="if(event.key==='Enter')authSubmit()">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Passwort</label>
-        <input class="form-control" id="auth-password" type="password" placeholder="Mindestens 6 Zeichen"
-          onkeydown="if(event.key==='Enter')authSubmit()">
+        <label class="form-label">Nutzername</label>
+        <input class="form-control" id="auth-username" type="text" placeholder="Dein Name"
+          autocomplete="username" onkeydown="if(event.key==='Enter')authSubmit()">
       </div>
       <div class="auth-error" id="auth-error"></div>
       <button class="btn btn-primary" id="auth-submit-btn" style="width:100%;" onclick="authSubmit()">
         Anmelden
       </button>
+      <p style="color:var(--text2);font-size:13px;text-align:center;margin-top:14px;line-height:1.5;">
+        Neuer Nutzer? Einfach einen Namen eingeben —<br>das Konto wird automatisch erstellt.
+      </p>
     </div>
   </div>
 

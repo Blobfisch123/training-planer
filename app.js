@@ -2048,53 +2048,50 @@ function escHtml(str) {
 // ============================================================
 // AUTH
 // ============================================================
-let authMode = 'login';
+const AUTH_SECRET = 'TP_static_2024_xK9mQ!';
 
-function showAuthTab(mode) {
-  authMode = mode;
-  document.querySelectorAll('.auth-tab').forEach(t => {
-    t.classList.toggle('active', t.dataset.tab === mode);
-  });
-  const nameGroup = document.getElementById('auth-name-group');
-  const submitBtn = document.getElementById('auth-submit-btn');
-  if (mode === 'register') {
-    nameGroup.style.display = 'block';
-    submitBtn.textContent = 'Registrieren';
-  } else {
-    nameGroup.style.display = 'none';
-    submitBtn.textContent = 'Anmelden';
-  }
-  document.getElementById('auth-error').textContent = '';
+function normalizeUsername(name) {
+  return name.toLowerCase()
+    .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+    .replace(/\s+/g,'_')
+    .replace(/[^a-z0-9_-]/g,'');
 }
 
+function showAuthTab() {} // Nicht mehr verwendet
+
 async function authSubmit() {
-  const email    = document.getElementById('auth-email').value.trim();
-  const password = document.getElementById('auth-password').value;
+  const username = (document.getElementById('auth-username').value || '').trim();
   const errDiv   = document.getElementById('auth-error');
   const btn      = document.getElementById('auth-submit-btn');
   errDiv.textContent = '';
-  if (!email || !password) { errDiv.textContent = 'Bitte E-Mail und Passwort eingeben.'; return; }
+  if (!username) { errDiv.textContent = 'Bitte einen Nutzernamen eingeben.'; return; }
+  const normalized = normalizeUsername(username);
+  if (!normalized) { errDiv.textContent = 'Bitte einen gültigen Namen eingeben.'; return; }
+  const email = `${normalized}@trainingplaner.app`;
   btn.disabled = true;
   try {
-    if (authMode === 'register') {
-      const name = document.getElementById('auth-name').value.trim();
-      const cred = await auth.createUserWithEmailAndPassword(email, password);
-      if (name) await cred.user.updateProfile({ displayName: name });
-    } else {
-      await auth.signInWithEmailAndPassword(email, password);
-    }
+    // Versuche Anmeldung mit bestehendem Account
+    await auth.signInWithEmailAndPassword(email, AUTH_SECRET);
   } catch(e) {
-    const msgs = {
-      'auth/email-already-in-use': 'Diese E-Mail ist bereits registriert.',
-      'auth/invalid-email':        'Ungültige E-Mail-Adresse.',
-      'auth/weak-password':        'Passwort muss mindestens 6 Zeichen haben.',
-      'auth/user-not-found':       'Kein Konto mit dieser E-Mail gefunden.',
-      'auth/wrong-password':       'Falsches Passwort.',
-      'auth/invalid-credential':   'E-Mail oder Passwort falsch.',
-      'auth/too-many-requests':    'Zu viele Versuche. Bitte warte kurz.',
-    };
-    errDiv.textContent = msgs[e.code] || e.message;
-    btn.disabled = false;
+    const newAccountErrors = ['auth/user-not-found','auth/invalid-credential','auth/wrong-password'];
+    if (newAccountErrors.includes(e.code)) {
+      // Neuer Nutzer – Account automatisch erstellen
+      try {
+        const cred = await auth.createUserWithEmailAndPassword(email, AUTH_SECRET);
+        await cred.user.updateProfile({ displayName: username });
+      } catch(e2) {
+        errDiv.textContent = e2.code === 'auth/email-already-in-use'
+          ? 'Dieser Name ist bereits vergeben.'
+          : 'Fehler beim Erstellen des Kontos. Versuche es erneut.';
+        btn.disabled = false;
+      }
+    } else if (e.code === 'auth/too-many-requests') {
+      errDiv.textContent = 'Zu viele Versuche. Bitte warte kurz.';
+      btn.disabled = false;
+    } else {
+      errDiv.textContent = 'Anmeldung fehlgeschlagen. Versuche es erneut.';
+      btn.disabled = false;
+    }
   }
 }
 
@@ -2117,7 +2114,8 @@ window.addEventListener('DOMContentLoaded', () => {
       setupRealtimeSync(user.uid);
       document.getElementById('loading-screen').style.display = 'none';
       document.getElementById('app-layout').style.display   = 'flex';
-      document.getElementById('sidebar-user-email').textContent = user.displayName || user.email;
+      document.getElementById('sidebar-user-email').textContent =
+        user.displayName || user.email.split('@')[0].replace(/_/g, ' ');
       navigate('dashboard');
       updateInjuryBadge();
     } else {
