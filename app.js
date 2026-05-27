@@ -243,11 +243,21 @@ function toggleSidebar() {
   sidebar.classList.toggle('collapsed');
 }
 
+const MORE_VIEWS = ['plans', 'library', 'injuries'];
+
 function navigate(view) {
   state.view = view;
+  // Sidebar nav
   document.querySelectorAll('.nav-item').forEach(el => {
     el.classList.toggle('active', el.dataset.view === view);
   });
+  // Bottom nav
+  document.querySelectorAll('.bottom-nav-item[data-view]').forEach(el => {
+    el.classList.toggle('active', el.dataset.view === view);
+  });
+  const moreBtn = document.getElementById('bottom-nav-more');
+  if (moreBtn) moreBtn.classList.toggle('active', MORE_VIEWS.includes(view));
+
   const badge = document.getElementById('injury-badge');
   const active = getActiveInjuries();
   if (badge) badge.style.display = active.length ? 'flex' : 'none';
@@ -258,6 +268,15 @@ function navigate(view) {
                   workout: renderWorkout, progress: renderProgress,
                   library: renderLibrary, injuries: renderInjuries };
   if (views[view]) views[view]();
+}
+
+function toggleMoreMenu() {
+  const overlay = document.getElementById('more-menu-overlay');
+  const menu    = document.getElementById('more-menu');
+  if (!overlay || !menu) return;
+  const opening = !menu.classList.contains('open');
+  overlay.classList.toggle('open', opening);
+  menu.classList.toggle('open', opening);
 }
 
 // ============================================================

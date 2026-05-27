@@ -542,3 +542,91 @@ select.form-control { min-height: 48px; }
 /* Bigger scrollbars for touch */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { border-radius: 4px; }
+
+/* ===== BOTTOM NAVIGATION (mobile) ===== */
+.bottom-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  background: var(--bg2); border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 3px; padding: 8px 4px; min-height: 56px;
+  color: var(--text2); font-size: 10px; font-weight: 500;
+  text-decoration: none; cursor: pointer;
+  background: none; border: none;
+  touch-action: manipulation; transition: color var(--transition);
+}
+.bottom-nav-item svg { width: 22px; height: 22px; flex-shrink: 0; }
+.bottom-nav-item.active { color: var(--accent); }
+.bottom-nav-item:active { opacity: 0.65; }
+
+/* ===== MORE MENU (mobile slide-up sheet) ===== */
+.more-menu-overlay {
+  display: none; position: fixed; inset: 0; z-index: 80;
+  background: rgba(0,0,0,0.5);
+}
+.more-menu-overlay.open { display: block; }
+.more-menu {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 81;
+  background: var(--bg2); border-top: 1px solid var(--border);
+  border-radius: 20px 20px 0 0;
+  padding: 0 0 calc(8px + env(safe-area-inset-bottom));
+  transform: translateY(100%); transition: transform 0.28s ease;
+}
+.more-menu.open { transform: translateY(0); }
+.more-menu-handle {
+  width: 36px; height: 4px; background: var(--border);
+  border-radius: 2px; margin: 10px auto 8px;
+}
+.more-menu-item {
+  display: flex; align-items: center; gap: 16px;
+  padding: 15px 20px; color: var(--text); font-size: 15px;
+  cursor: pointer; touch-action: manipulation;
+}
+.more-menu-item:active { background: var(--surface); }
+.more-menu-item svg { width: 20px; height: 20px; color: var(--text2); flex-shrink: 0; }
+.more-menu-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+/* ===== RESPONSIVE: MOBILE ===== */
+@media (max-width: 768px) {
+  /* Show bottom nav */
+  .bottom-nav { display: flex; }
+
+  /* Hide sidebar entirely */
+  .sidebar { display: none; }
+
+  /* Content: full width, space for bottom nav */
+  #content { padding: 16px 16px calc(72px + env(safe-area-inset-bottom)); }
+
+  /* Modal: slide up from bottom as a sheet */
+  .modal-overlay { align-items: flex-end; }
+  .modal {
+    width: 100%; max-width: 100%; margin: 0;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 20px calc(24px + env(safe-area-inset-bottom));
+    max-height: 88vh;
+  }
+
+  /* Collapse grids to single column */
+  .grid-3, .grid-2 { grid-template-columns: 1fr; gap: 12px; }
+  .form-row { grid-template-columns: 1fr; }
+  .form-row-3 { grid-template-columns: 1fr 1fr; }
+
+  /* Auth card: full width */
+  .auth-card { width: 100%; max-width: 100%; border-radius: 0;
+    min-height: 100vh; justify-content: center; border: none; }
+
+  /* Page title spacing */
+  .page-title { font-size: 20px; }
+
+  /* Week: keep column layout but tighter */
+  .day-cell { padding: 10px 14px; }
+  .day-label { font-size: 13px; min-width: 80px; }
+
+  /* Week nav: full width buttons */
+  .week-nav { gap: 8px; }
+  .week-nav .btn { flex: 1; justify-content: center; }
+}
