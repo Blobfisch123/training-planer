@@ -73,43 +73,78 @@ function getSpecialDay(id) {
   return (state.data.customDayTypes || []).find(t => t.id === id) || null;
 }
 
-function dbLoad() {
-  try {
-    const raw = localStorage.getItem(DB_KEY);
-    if (raw) {
-      const d = JSON.parse(raw);
-      if (!d.customDayTypes) d.customDayTypes = [...DEFAULT_DAY_TYPES];
-      if (!d.planFolders) d.planFolders = [];
-      // migrate old numeric weekSchedule { 0:planId } to date-based { "2024-01-15": planId }
-      if (d.weekSchedule) {
-        const keys = Object.keys(d.weekSchedule);
-        // migrate old numeric weekSchedule { 0:planId } to date-based
-        if (keys.length > 0 && keys.every(k => /^[0-6]$/.test(k))) {
-          const newSched = {};
-          const now = new Date();
-          const curr = now.getDay() === 0 ? 6 : now.getDay() - 1;
-          const mon = new Date(now); mon.setDate(now.getDate() - curr);
-          keys.forEach(k => {
-            const d2 = new Date(mon); d2.setDate(mon.getDate() + parseInt(k));
-            newSched[localDateStr(d2)] = d.weekSchedule[k];
-          });
-          d.weekSchedule = newSched;
-        }
-        // migrate single string values to arrays
-        Object.keys(d.weekSchedule).forEach(k => {
-          if (typeof d.weekSchedule[k] === 'string') {
-            d.weekSchedule[k] = [d.weekSchedule[k]];
-          }
-        });
-      }
-      return d;
+function getDefaultData() {
+  return { plans: [], weekSchedule: {}, workoutLogs: [], injuries: [],
+           customExercises: [], customDayTypes: [...DEFAULT_DAY_TYPES], planFolders: [] };
+}
+
+function migrateData(d) {
+  if (!d.customDayTypes) d.customDayTypes = [...DEFAULT_DAY_TYPES];
+  if (!d.planFolders)    d.planFolders    = [];
+  if (d.weekSchedule) {
+    const keys = Object.keys(d.weekSchedule);
+    if (keys.length > 0 && keys.every(k => /^[0-6]$/.test(k))) {
+      const newSched = {};
+      const now = new Date();
+      const curr = now.getDay() === 0 ? 6 : now.getDay() - 1;
+      const mon = new Date(now); mon.setDate(now.getDate() - curr);
+      keys.forEach(k => {
+        const d2 = new Date(mon); d2.setDate(mon.getDate() + parseInt(k));
+        newSched[localDateStr(d2)] = d.weekSchedule[k];
+      });
+      d.weekSchedule = newSched;
     }
-  } catch(e) {}
-  return { plans: [], weekSchedule: {}, workoutLogs: [], injuries: [], customExercises: [], customDayTypes: [...DEFAULT_DAY_TYPES], planFolders: [] };
+    Object.keys(d.weekSchedule).forEach(k => {
+      if (typeof d.weekSchedule[k] === 'string') {
+        d.weekSchedule[k] = [d.weekSchedule[k]];
+      }
+    });
+  }
+  return d;
+}
+
+async function loadUserData(uid) {
+  const docRef = db.doc(`users/${uid}`);
+  const snap   = await docRef.get();
+  if (snap.exists) {
+    state.data = migrateData(snap.data());
+  } else {
+    // Erster Login – prüfe ob lokale Daten vorhanden (Migration)
+    try {
+      const local = localStorage.getItem(DB_KEY);
+      if (local) {
+        state.data = migrateData(JSON.parse(local));
+        toast('Lokale Daten wurden in die Cloud übertragen ✓', 'success');
+      } else {
+        state.data = getDefaultData();
+      }
+    } catch(e) {
+      state.data = getDefaultData();
+    }
+    await docRef.set(state.data);
+  }
 }
 
 function dbSave(data) {
-  localStorage.setItem(DB_KEY, JSON.stringify(data));
+  if (!state.currentUser) return;
+  db.doc(`users/${state.currentUser.uid}`).set(data)
+    .catch(e => console.error('Speichern fehlgeschlagen:', e));
+}
+
+let _syncUnsubscribe = null;
+function setupRealtimeSync(uid) {
+  if (_syncUnsubscribe) _syncUnsubscribe();
+  _syncUnsubscribe = db.doc(`users/${uid}`).onSnapshot(snap => {
+    if (snap.exists && !snap.metadata.hasPendingWrites) {
+      state.data = migrateData(snap.data());
+      if (!state.activeWorkout) {
+        const renders = { dashboard: renderDashboard, plans: renderPlans,
+          schedule: renderSchedule, workout: renderWorkout,
+          progress: renderProgress, library: renderLibrary, injuries: renderInjuries };
+        if (renders[state.view]) renders[state.view]();
+      }
+    }
+  });
 }
 
 function allExercises() {
@@ -140,7 +175,8 @@ function getInjuryWarnings(exercise) {
 // ============================================================
 let state = {
   view: 'dashboard',
-  data: dbLoad(),
+  data: getDefaultData(),
+  currentUser: null,
   editingPlan: null,
   activeWorkout: null,
   workoutStartTime: null,
@@ -2010,9 +2046,87 @@ function escHtml(str) {
 }
 
 // ============================================================
+// AUTH
+// ============================================================
+let authMode = 'login';
+
+function showAuthTab(mode) {
+  authMode = mode;
+  document.querySelectorAll('.auth-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === mode);
+  });
+  const nameGroup = document.getElementById('auth-name-group');
+  const submitBtn = document.getElementById('auth-submit-btn');
+  if (mode === 'register') {
+    nameGroup.style.display = 'block';
+    submitBtn.textContent = 'Registrieren';
+  } else {
+    nameGroup.style.display = 'none';
+    submitBtn.textContent = 'Anmelden';
+  }
+  document.getElementById('auth-error').textContent = '';
+}
+
+async function authSubmit() {
+  const email    = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errDiv   = document.getElementById('auth-error');
+  const btn      = document.getElementById('auth-submit-btn');
+  errDiv.textContent = '';
+  if (!email || !password) { errDiv.textContent = 'Bitte E-Mail und Passwort eingeben.'; return; }
+  btn.disabled = true;
+  try {
+    if (authMode === 'register') {
+      const name = document.getElementById('auth-name').value.trim();
+      const cred = await auth.createUserWithEmailAndPassword(email, password);
+      if (name) await cred.user.updateProfile({ displayName: name });
+    } else {
+      await auth.signInWithEmailAndPassword(email, password);
+    }
+  } catch(e) {
+    const msgs = {
+      'auth/email-already-in-use': 'Diese E-Mail ist bereits registriert.',
+      'auth/invalid-email':        'Ungültige E-Mail-Adresse.',
+      'auth/weak-password':        'Passwort muss mindestens 6 Zeichen haben.',
+      'auth/user-not-found':       'Kein Konto mit dieser E-Mail gefunden.',
+      'auth/wrong-password':       'Falsches Passwort.',
+      'auth/invalid-credential':   'E-Mail oder Passwort falsch.',
+      'auth/too-many-requests':    'Zu viele Versuche. Bitte warte kurz.',
+    };
+    errDiv.textContent = msgs[e.code] || e.message;
+    btn.disabled = false;
+  }
+}
+
+function authLogout() {
+  if (_syncUnsubscribe) { _syncUnsubscribe(); _syncUnsubscribe = null; }
+  auth.signOut();
+}
+
+// ============================================================
 // INIT
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
-  navigate('dashboard');
-  updateInjuryBadge();
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      state.currentUser = user;
+      document.getElementById('auth-screen').style.display  = 'none';
+      document.getElementById('loading-screen').style.display = 'flex';
+      document.getElementById('app-layout').style.display   = 'none';
+      await loadUserData(user.uid);
+      setupRealtimeSync(user.uid);
+      document.getElementById('loading-screen').style.display = 'none';
+      document.getElementById('app-layout').style.display   = 'flex';
+      document.getElementById('sidebar-user-email').textContent = user.displayName || user.email;
+      navigate('dashboard');
+      updateInjuryBadge();
+    } else {
+      if (_syncUnsubscribe) { _syncUnsubscribe(); _syncUnsubscribe = null; }
+      state.currentUser = null;
+      state.data = getDefaultData();
+      document.getElementById('loading-screen').style.display = 'none';
+      document.getElementById('app-layout').style.display    = 'none';
+      document.getElementById('auth-screen').style.display   = 'flex';
+    }
+  });
 });

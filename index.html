@@ -13,7 +13,47 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="app-layout">
+
+  <!-- Loading Screen -->
+  <div id="loading-screen" style="display:flex;">
+    <div class="spinner"></div>
+    <div style="color:var(--text2);font-size:14px;">Wird geladen…</div>
+  </div>
+
+  <!-- Auth Screen -->
+  <div id="auth-screen" style="display:none;">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">🏋️</div>
+        <div class="auth-logo-title">TrainingPlaner</div>
+      </div>
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-tab="login" onclick="showAuthTab('login')">Anmelden</div>
+        <div class="auth-tab" data-tab="register" onclick="showAuthTab('register')">Registrieren</div>
+      </div>
+      <div id="auth-name-group" class="form-group" style="display:none;">
+        <label class="form-label">Name</label>
+        <input class="form-control" id="auth-name" type="text" placeholder="Dein Name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-Mail</label>
+        <input class="form-control" id="auth-email" type="email" placeholder="deine@email.com"
+          onkeydown="if(event.key==='Enter')authSubmit()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Passwort</label>
+        <input class="form-control" id="auth-password" type="password" placeholder="Mindestens 6 Zeichen"
+          onkeydown="if(event.key==='Enter')authSubmit()">
+      </div>
+      <div class="auth-error" id="auth-error"></div>
+      <button class="btn btn-primary" id="auth-submit-btn" style="width:100%;" onclick="authSubmit()">
+        Anmelden
+      </button>
+    </div>
+  </div>
+
+  <!-- App Layout -->
+  <div class="app-layout" id="app-layout" style="display:none;">
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-logo">
@@ -73,6 +113,15 @@
           <span class="injury-badge" id="injury-badge" style="display:none">!</span>
         </a>
       </nav>
+      <div class="sidebar-user">
+        <div class="sidebar-user-email" id="sidebar-user-email"></div>
+        <button class="btn btn-secondary btn-sm sidebar-logout-btn" onclick="authLogout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+          <span>Abmelden</span>
+        </button>
+      </div>
     </aside>
 
     <!-- Main Content -->
@@ -93,6 +142,11 @@
     </div>
   </div>
 
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
   <script src="app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
