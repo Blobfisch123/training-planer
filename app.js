@@ -171,6 +171,27 @@ function getInjuryWarnings(exercise) {
 }
 
 // ============================================================
+// TRACKING TYPES
+// ============================================================
+const TIMED_EXERCISE_IDS = new Set(['e33']); // Plank
+
+function getTrackingType(exDef) {
+  if (!exDef) return 'weight';
+  if (exDef.trackingType) return exDef.trackingType; // benutzerdefinierte Übungen
+  if (exDef.cat === 'Cardio') return 'cardio';
+  if (TIMED_EXERCISE_IDS.has(exDef.id)) return 'timed';
+  return 'weight';
+}
+
+function detectSetType(sets) {
+  if (!sets || !sets.length) return 'weight';
+  const s = sets[0];
+  if ('distance' in s) return 'cardio';
+  if ('duration' in s && !('reps' in s)) return 'timed';
+  return 'weight';
+}
+
+// ============================================================
 // STATE
 // ============================================================
 let state = {
@@ -712,22 +733,22 @@ function renderPlanExerciseRow(ex, idx) {
         ${warnings.length ? `<span class="badge badge-warn" title="Achtung: Verletzung ${warnings.join(', ')}">⚠ ${warnings.join(', ')}</span>` : ''}
       </div>
       <div style="display:flex;gap:16px;margin-top:8px;align-items:center;flex-wrap:wrap;">
-        <div>
-          <div class="set-label">Sätze</div>
-          <input class="set-input" type="number" min="1" max="20" value="${ex.sets||3}" onchange="updatePlanEx(${idx},'sets',this.value)">
-        </div>
-        <div>
-          <div class="set-label">Wdh.</div>
-          <input class="set-input" type="text" value="${ex.reps||'8-12'}" placeholder="8-12" onchange="updatePlanEx(${idx},'reps',this.value)">
-        </div>
-        <div>
-          <div class="set-label">Gewicht (kg)</div>
-          <input class="set-input" type="number" min="0" step="2.5" value="${ex.weight||0}" onchange="updatePlanEx(${idx},'weight',this.value)">
-        </div>
-        <div>
-          <div class="set-label">Pause (s)</div>
-          <input class="set-input" type="number" min="0" step="15" value="${ex.restTime||90}" onchange="updatePlanEx(${idx},'restTime',this.value)">
-        </div>
+        ${(()=>{ const type = getTrackingType(exDef);
+          if (type === 'cardio') return `
+            <div><div class="set-label">Intervalle</div><input class="set-input" type="number" min="1" max="20" value="${ex.sets||1}" onchange="updatePlanEx(${idx},'sets',this.value)"></div>
+            <div><div class="set-label">Ziel km</div><input class="set-input" type="number" min="0" step="0.1" value="${ex.targetDistance||0}" onchange="updatePlanEx(${idx},'targetDistance',this.value)"></div>
+            <div><div class="set-label">Ziel min</div><input class="set-input" type="number" min="0" step="1" value="${ex.targetDuration||0}" onchange="updatePlanEx(${idx},'targetDuration',this.value)"></div>
+            <div><div class="set-label">Pause (s)</div><input class="set-input" type="number" min="0" step="15" value="${ex.restTime||60}" onchange="updatePlanEx(${idx},'restTime',this.value)"></div>`;
+          if (type === 'timed') return `
+            <div><div class="set-label">Sätze</div><input class="set-input" type="number" min="1" max="20" value="${ex.sets||3}" onchange="updatePlanEx(${idx},'sets',this.value)"></div>
+            <div><div class="set-label">Ziel (s)</div><input class="set-input" type="number" min="0" step="5" value="${ex.targetDuration||60}" onchange="updatePlanEx(${idx},'targetDuration',this.value)"></div>
+            <div><div class="set-label">Pause (s)</div><input class="set-input" type="number" min="0" step="15" value="${ex.restTime||90}" onchange="updatePlanEx(${idx},'restTime',this.value)"></div>`;
+          return `
+            <div><div class="set-label">Sätze</div><input class="set-input" type="number" min="1" max="20" value="${ex.sets||3}" onchange="updatePlanEx(${idx},'sets',this.value)"></div>
+            <div><div class="set-label">Wdh.</div><input class="set-input" type="text" value="${ex.reps||'8-12'}" placeholder="8-12" onchange="updatePlanEx(${idx},'reps',this.value)"></div>
+            <div><div class="set-label">Gewicht (kg)</div><input class="set-input" type="number" min="0" step="2.5" value="${ex.weight||0}" onchange="updatePlanEx(${idx},'weight',this.value)"></div>
+            <div><div class="set-label">Pause (s)</div><input class="set-input" type="number" min="0" step="15" value="${ex.restTime||90}" onchange="updatePlanEx(${idx},'restTime',this.value)"></div>`;
+        })()}
       </div>
       ${ex.notes ? `<div style="font-size:12px;color:var(--text2);margin-top:6px;">📝 ${escHtml(ex.notes)}</div>` : ''}
     </div>
@@ -1334,13 +1355,19 @@ function startWorkout() {
     planName: plan.name,
     date: today(),
     exercises: (plan.exercises||[]).map(ex => {
-      const parsedReps = parseInt(ex.reps) || 10;
-      return {
-        exerciseId: ex.exerciseId,
-        sets: Array.from({length: ex.sets||3}, () => ({
-          reps: parsedReps, weight: ex.weight||0, completed: false
-        }))
-      };
+      const exDef = getExercise(ex.exerciseId);
+      const type  = getTrackingType(exDef);
+      const num   = ex.sets || (type === 'cardio' ? 1 : 3);
+      let sets;
+      if (type === 'cardio') {
+        sets = Array.from({length: num}, () => ({ distance: ex.targetDistance||0, duration: ex.targetDuration||0, completed: false }));
+      } else if (type === 'timed') {
+        sets = Array.from({length: num}, () => ({ duration: ex.targetDuration||60, completed: false }));
+      } else {
+        const parsedReps = parseInt(ex.reps) || 10;
+        sets = Array.from({length: num}, () => ({ reps: parsedReps, weight: ex.weight||0, completed: false }));
+      }
+      return { exerciseId: ex.exerciseId, sets };
     })
   };
   state.workoutStartTime = Date.now();
@@ -1354,28 +1381,59 @@ function renderActiveWorkout() {
   const rows = w.exercises.map((ex, exIdx) => {
     const exDef = getExercise(ex.exerciseId);
     if (!exDef) return '';
+    const type = getTrackingType(exDef);
     const warnings = getInjuryWarnings(exDef);
     const completedSets = ex.sets.filter(s => s.completed).length;
+    const unitLabel = type === 'cardio' ? 'Einheiten' : 'Sätze';
+
+    // Header row per type
+    const headerRow = type === 'cardio'
+      ? `<div class="set-row"><span>Nr.</span><span>km</span><span>min</span><span>km/h</span><span></span></div>`
+      : type === 'timed'
+      ? `<div class="set-row"><span>Satz</span><span>Sek.</span><span></span><span></span><span></span></div>`
+      : `<div class="set-row"><span>Satz</span><span>Wdh.</span><span>kg</span><span>Vol.</span><span></span></div>`;
+
+    const setRowsHtml = ex.sets.map((set, sIdx) => {
+      const check = `<div class="set-done ${set.completed?'checked':''}" onclick="toggleSet(${exIdx},${sIdx})">
+        ${set.completed?`<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`:''}
+      </div>`;
+      if (type === 'cardio') {
+        const spd = (set.duration||0) > 0 ? ((set.distance||0) / ((set.duration||0) / 60)).toFixed(1) : '–';
+        return `<div class="set-row">
+          <span class="set-num">${sIdx+1}</span>
+          <input class="set-input" type="number" min="0" step="0.1" value="${set.distance||0}" onchange="updateSet(${exIdx},${sIdx},'distance',this.value)">
+          <input class="set-input" type="number" min="0" step="0.5" value="${set.duration||0}" onchange="updateSet(${exIdx},${sIdx},'duration',this.value)">
+          <span style="font-size:13px;color:var(--text2);">${spd}</span>
+          ${check}
+        </div>`;
+      }
+      if (type === 'timed') {
+        return `<div class="set-row">
+          <span class="set-num">${sIdx+1}</span>
+          <input class="set-input" type="number" min="1" step="5" value="${set.duration||60}" onchange="updateSet(${exIdx},${sIdx},'duration',this.value)">
+          <span></span><span></span>${check}
+        </div>`;
+      }
+      return `<div class="set-row">
+        <span class="set-num">${sIdx+1}</span>
+        <input class="set-input" type="number" min="1" value="${set.reps||0}" onchange="updateSet(${exIdx},${sIdx},'reps',this.value)">
+        <input class="set-input" type="number" min="0" step="2.5" value="${set.weight||0}" onchange="updateSet(${exIdx},${sIdx},'weight',this.value)">
+        <span style="font-size:13px;color:var(--text2);">${((set.reps||0)*(set.weight||0)).toFixed(0)} kg</span>
+        ${check}
+      </div>`;
+    }).join('');
+
     return `<div class="session-exercise">
       <div class="session-ex-header">
         <div>
           <div class="session-ex-name">${escHtml(exDef.name)}</div>
           ${warnings.length ? `<span class="badge badge-warn">⚠ ${warnings.join(', ')}</span>` : ''}
         </div>
-        <span class="badge ${completedSets===ex.sets.length?'badge-green':'badge-gray'}">${completedSets}/${ex.sets.length} Sätze</span>
+        <span class="badge ${completedSets===ex.sets.length?'badge-green':'badge-gray'}">${completedSets}/${ex.sets.length} ${unitLabel}</span>
       </div>
-      <div class="set-row"><span>Satz</span><span>Wdh.</span><span>Gewicht (kg)</span><span>Volumen</span><span></span></div>
-      ${ex.sets.map((set, sIdx) => `
-        <div class="set-row">
-          <span class="set-num">${sIdx+1}</span>
-          <input class="set-input" type="number" min="1" value="${set.reps}" onchange="updateSet(${exIdx},${sIdx},'reps',this.value)">
-          <input class="set-input" type="number" min="0" step="2.5" value="${set.weight}" onchange="updateSet(${exIdx},${sIdx},'weight',this.value)">
-          <span style="font-size:13px;color:var(--text2);">${(set.reps*set.weight).toFixed(0)} kg</span>
-          <div class="set-done ${set.completed?'checked':''}" onclick="toggleSet(${exIdx},${sIdx})">
-            ${set.completed ? `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
-          </div>
-        </div>
-      `).join('')}
+      ${headerRow}
+      ${setRowsHtml}
+      <button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="addWorkoutSet(${exIdx})">+ ${type==='cardio'?'Einheit':'Satz'} hinzufügen</button>
     </div>`;
   }).join('');
 
@@ -1405,6 +1463,22 @@ function toggleSet(exIdx, sIdx) {
   if (!state.activeWorkout) return;
   const set = state.activeWorkout.exercises[exIdx].sets[sIdx];
   set.completed = !set.completed;
+  renderWorkout();
+}
+
+function addWorkoutSet(exIdx) {
+  if (!state.activeWorkout) return;
+  const ex = state.activeWorkout.exercises[exIdx];
+  const exDef = getExercise(ex.exerciseId);
+  const type  = getTrackingType(exDef);
+  const last  = ex.sets[ex.sets.length - 1] || {};
+  if (type === 'cardio') {
+    ex.sets.push({ distance: last.distance||0, duration: last.duration||0, completed: false });
+  } else if (type === 'timed') {
+    ex.sets.push({ duration: last.duration||60, completed: false });
+  } else {
+    ex.sets.push({ reps: last.reps||10, weight: last.weight||0, completed: false });
+  }
   renderWorkout();
 }
 
@@ -1621,15 +1695,27 @@ function viewWorkoutLog(id) {
           <div class="session-ex-name">${escHtml(ex.exerciseName)}</div>
           <span class="badge badge-green">${done.length} Sätze</span>
         </div>
-        <div class="set-row"><span>Satz</span><span>Wdh.</span><span>Gewicht</span><span>Volumen</span><span></span></div>
-        ${done.map((s,i)=>`
-          <div class="set-row">
-            <span class="set-num">${i+1}</span>
-            <span>${s.reps}</span>
-            <span>${s.weight} kg</span>
-            <span style="color:var(--text2);">${(s.reps*s.weight).toFixed(0)} kg</span>
-            <span></span>
-          </div>`).join('')}
+        ${(()=>{
+          const st = detectSetType(ex.sets);
+          if (st === 'cardio') return `
+            <div class="set-row"><span>Nr.</span><span>Distanz</span><span>Zeit</span><span>km/h</span><span></span></div>
+            ${done.map((s,i)=>{
+              const spd = (s.duration||0)>0?((s.distance||0)/((s.duration||0)/60)).toFixed(1):'–';
+              return `<div class="set-row"><span class="set-num">${i+1}</span><span>${s.distance||0} km</span><span>${s.duration||0} min</span><span style="color:var(--text2);">${spd}</span><span></span></div>`;
+            }).join('')}`;
+          if (st === 'timed') return `
+            <div class="set-row"><span>Satz</span><span>Dauer</span><span></span><span></span><span></span></div>
+            ${done.map((s,i)=>`<div class="set-row"><span class="set-num">${i+1}</span><span>${s.duration||0} s</span><span></span><span></span><span></span></div>`).join('')}`;
+          return `
+            <div class="set-row"><span>Satz</span><span>Wdh.</span><span>Gewicht</span><span>Volumen</span><span></span></div>
+            ${done.map((s,i)=>`<div class="set-row">
+              <span class="set-num">${i+1}</span>
+              <span>${s.reps}</span>
+              <span>${s.weight} kg</span>
+              <span style="color:var(--text2);">${((s.reps||0)*(s.weight||0)).toFixed(0)} kg</span>
+              <span></span>
+            </div>`).join('')}`;
+        })()}
       </div>`;
     }).join('')}
     <div class="flex-end mt-16">
