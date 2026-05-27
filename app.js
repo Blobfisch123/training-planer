@@ -2229,7 +2229,19 @@ function normalizeUsername(name) {
     .replace(/[^a-z0-9_-]/g,'');
 }
 
-function showAuthTab() {} // Nicht mehr verwendet
+let _authMode = 'login'; // 'login' | 'register'
+
+function authSetMode(mode) {
+  _authMode = mode;
+  const isLogin = mode === 'login';
+  document.getElementById('auth-tab-login').classList.toggle('active', isLogin);
+  document.getElementById('auth-tab-register').classList.toggle('active', !isLogin);
+  document.getElementById('auth-submit-btn').textContent = isLogin ? 'Anmelden' : 'Konto erstellen';
+  document.getElementById('auth-hint').textContent = isLogin
+    ? 'Gib deinen Nutzernamen ein, um dich anzumelden.'
+    : 'Wähle einen Nutzernamen, um ein neues Konto zu erstellen.';
+  document.getElementById('auth-error').textContent = '';
+}
 
 async function authSubmit() {
   const username = (document.getElementById('auth-username').value || '').trim();
@@ -2241,28 +2253,34 @@ async function authSubmit() {
   if (!normalized) { errDiv.textContent = 'Bitte einen gültigen Namen eingeben.'; return; }
   const email = `${normalized}@trainingplaner.app`;
   btn.disabled = true;
+
   try {
-    // Versuche Anmeldung mit bestehendem Account
-    await auth.signInWithEmailAndPassword(email, AUTH_SECRET);
-  } catch(e) {
-    const newAccountErrors = ['auth/user-not-found','auth/invalid-credential','auth/wrong-password'];
-    if (newAccountErrors.includes(e.code)) {
-      // Neuer Nutzer – Account automatisch erstellen
-      try {
-        const cred = await auth.createUserWithEmailAndPassword(email, AUTH_SECRET);
-        await cred.user.updateProfile({ displayName: username });
-      } catch(e2) {
-        errDiv.textContent = e2.code === 'auth/email-already-in-use'
-          ? 'Dieser Name ist bereits vergeben.'
-          : 'Fehler beim Erstellen des Kontos. Versuche es erneut.';
-        btn.disabled = false;
-      }
-    } else if (e.code === 'auth/too-many-requests') {
-      errDiv.textContent = 'Zu viele Versuche. Bitte warte kurz.';
-      btn.disabled = false;
+    if (_authMode === 'login') {
+      // Nur Anmelden – kein automatisches Konto erstellen
+      await auth.signInWithEmailAndPassword(email, AUTH_SECRET);
     } else {
-      errDiv.textContent = 'Anmeldung fehlgeschlagen. Versuche es erneut.';
-      btn.disabled = false;
+      // Nur Registrieren – kein Login bei bestehendem Account
+      const cred = await auth.createUserWithEmailAndPassword(email, AUTH_SECRET);
+      await cred.user.updateProfile({ displayName: username });
+    }
+  } catch(e) {
+    btn.disabled = false;
+    if (_authMode === 'login') {
+      if (['auth/user-not-found','auth/invalid-credential','auth/wrong-password'].includes(e.code)) {
+        errDiv.textContent = 'Kein Konto mit diesem Namen gefunden. Bitte zuerst registrieren.';
+      } else if (e.code === 'auth/too-many-requests') {
+        errDiv.textContent = 'Zu viele Versuche. Bitte warte kurz.';
+      } else {
+        errDiv.textContent = 'Anmeldung fehlgeschlagen. Versuche es erneut.';
+      }
+    } else {
+      if (e.code === 'auth/email-already-in-use') {
+        errDiv.textContent = 'Dieser Name ist bereits vergeben. Bitte melde dich stattdessen an.';
+      } else if (e.code === 'auth/too-many-requests') {
+        errDiv.textContent = 'Zu viele Versuche. Bitte warte kurz.';
+      } else {
+        errDiv.textContent = 'Fehler beim Erstellen des Kontos. Versuche es erneut.';
+      }
     }
   }
 }
