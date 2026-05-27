@@ -114,7 +114,7 @@ async function loadUserData(uid) {
       const local = localStorage.getItem(DB_KEY);
       if (local) {
         state.data = migrateData(JSON.parse(local));
-        toast('Lokale Daten wurden in die Cloud übertragen ✓', 'success');
+        toast('Lokale Daten wurden in die Cloud übertragen', 'success');
       } else {
         state.data = getDefaultData();
       }
@@ -477,7 +477,7 @@ function renderDashboard() {
                   <div style="font-weight:600;font-size:13px;">${log.planName}</div>
                   <div style="font-size:12px;color:var(--text2);">${formatDate(log.date)} · ${(log.exercises||[]).length} Übungen</div>
                 </div>
-                <span class="badge badge-green">✓</span>
+                <span class="badge badge-green">Ok</span>
               </div>
             `).join('')
           }
@@ -590,7 +590,7 @@ function renderPlanCard(plan, folders) {
   ).join('');
 
   return `<div class="plan-card" onclick="openPlanEditor('${plan.id}')">
-    <div class="plan-card-name">${escHtml(plan.name)} ${hasInjury ? '<span class="badge badge-warn" style="font-size:10px;">⚠</span>' : ''}</div>
+    <div class="plan-card-name">${escHtml(plan.name)} ${hasInjury ? '<span class="badge badge-warn" style="font-size:10px;">!</span>' : ''}</div>
     <div class="plan-card-meta">
       <span>${(plan.exercises||[]).length} Übungen</span>
       ${plan.description ? `<span>${plan.description.slice(0,40)}${plan.description.length>40?'…':''}</span>` : ''}
@@ -730,7 +730,7 @@ function renderPlanExerciseRow(ex, idx) {
     <div style="flex:1;">
       <div class="exercise-item-name">
         ${escHtml(exDef.name)}
-        ${warnings.length ? `<span class="badge badge-warn" title="Achtung: Verletzung ${warnings.join(', ')}">⚠ ${warnings.join(', ')}</span>` : ''}
+        ${warnings.length ? `<span class="badge badge-warn" title="Achtung: Verletzung ${warnings.join(', ')}">${warnings.join(', ')}</span>` : ''}
       </div>
       <div style="display:flex;gap:16px;margin-top:8px;align-items:center;flex-wrap:wrap;">
         ${(()=>{ const type = getTrackingType(exDef);
@@ -755,7 +755,7 @@ function renderPlanExerciseRow(ex, idx) {
     <div style="display:flex;flex-direction:column;gap:4px;">
       ${idx > 0 ? `<button class="btn btn-ghost btn-icon" onclick="movePlanEx(${idx},-1)" title="Nach oben">▲</button>` : ''}
       ${idx < (state.editingPlan.exercises.length-1) ? `<button class="btn btn-ghost btn-icon" onclick="movePlanEx(${idx},1)" title="Nach unten">▼</button>` : ''}
-      <button class="btn btn-ghost btn-icon" onclick="removePlanEx(${idx})" style="color:var(--danger);">✕</button>
+      <button class="btn btn-ghost btn-icon" onclick="removePlanEx(${idx})" style="color:var(--danger);">×</button>
     </div>
   </div>`;
 }
@@ -789,7 +789,7 @@ function renderAddExCard(ex) {
     <div class="exercise-card-tags" style="margin-top:8px;">
       <span class="badge badge-gray">${ex.cat}</span>
       <span class="badge badge-gray">${ex.eq}</span>
-      ${risky ? `<span class="badge badge-warn">⚠ ${warnings.join(', ')}</span>` : ''}
+      ${risky ? `<span class="badge badge-warn">${warnings.join(', ')}</span>` : ''}
     </div>
     <button class="btn btn-primary btn-sm" style="width:100%;margin-top:10px;" onclick="addExerciseToPlan('${ex.id}')">+ Hinzufügen</button>
   </div>`;
@@ -1119,7 +1119,7 @@ function renderDayCell(dayName, dateStr, schedule, plans, dayTypes, todayStr) {
         <button onclick="removeDayItem('${dateStr}','${item.id}',${idx})" style="background:none;border:none;color:inherit;cursor:pointer;padding:0;line-height:1;font-size:14px;opacity:.7;" title="Entfernen">×</button>
       </span>`;
     } else {
-      const injWarn = item.hasInjury ? ' ⚠' : '';
+      const injWarn = item.hasInjury ? ' !' : '';
       return `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:12px;font-weight:600;background:rgba(79,142,247,0.12);color:var(--accent-b);border:1px solid rgba(79,142,247,0.3);">
         ${escHtml(item.label)}${injWarn}
         <button onclick="removeDayItem('${dateStr}','${item.id}',${idx})" style="background:none;border:none;color:inherit;cursor:pointer;padding:0;line-height:1;font-size:14px;opacity:.7;" title="Entfernen">×</button>
@@ -1127,7 +1127,7 @@ function renderDayCell(dayName, dateStr, schedule, plans, dayTypes, todayStr) {
     }
   }).join('');
 
-  const logTag = hasLog ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:12px;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.3);">✓ Absolviert</span>` : '';
+  const logTag = hasLog ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:12px;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.3);">Absolviert</span>` : '';
 
   const contentHtml = (tagsHtml || logTag)
     ? `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">${tagsHtml}${logTag}</div>`
@@ -1467,7 +1467,7 @@ function renderActiveWorkout() {
       <div class="session-ex-header">
         <div>
           <div class="session-ex-name">${escHtml(exDef.name)}</div>
-          ${warnings.length ? `<span class="badge badge-warn">⚠ ${warnings.join(', ')}</span>` : ''}
+          ${warnings.length ? `<span class="badge badge-warn">${warnings.join(', ')}</span>` : ''}
         </div>
         <span class="badge ${completedSets===ex.sets.length?'badge-green':'badge-gray'}">${completedSets}/${ex.sets.length} ${unitLabel}</span>
       </div>
@@ -1485,7 +1485,7 @@ function renderActiveWorkout() {
           <div style="font-size:13px;color:var(--text2);">${elapsed} Min. · ${formatDate(w.date)}</div>
         </div>
         <div style="display:flex;gap:10px;">
-          <button class="btn btn-success" onclick="finishWorkout()">Training beenden ✓</button>
+          <button class="btn btn-success" onclick="finishWorkout()">Training beenden</button>
           <button class="btn btn-ghost" onclick="cancelWorkout()">Abbrechen</button>
         </div>
       </div>
@@ -1853,14 +1853,14 @@ function renderLibExCard(ex) {
   return `<div class="exercise-card ${risky?'injured-warn':''}" data-cat="${ex.cat}" data-risky="${risky}" data-name="${ex.name.toLowerCase()}" onclick="openExerciseDetail('${ex.id}')" style="cursor:pointer;">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;">
       <div class="exercise-card-name">${escHtml(ex.name)}</div>
-      ${isCustom ? `<button class="btn btn-ghost btn-icon btn-sm" onclick="event.stopPropagation();deleteCustomExercise('${ex.id}')" style="color:var(--danger);" title="Löschen">✕</button>` : ''}
+      ${isCustom ? `<button class="btn btn-ghost btn-icon btn-sm" onclick="event.stopPropagation();deleteCustomExercise('${ex.id}')" style="color:var(--danger);" title="Löschen">×</button>` : ''}
     </div>
     <div class="exercise-card-muscles">${ex.muscles.join(' · ')}</div>
     ${ex.desc ? `<div class="exercise-desc">${escHtml(ex.desc)}</div>` : ''}
     <div class="exercise-card-tags" style="margin-top:8px;">
       <span class="badge badge-blue">${ex.cat}</span>
       <span class="badge badge-gray">${ex.eq}</span>
-      ${risky ? `<span class="badge badge-warn">⚠ ${warnings.join(', ')}</span>` : '<span class="badge badge-green">✓ Sicher</span>'}
+      ${risky ? `<span class="badge badge-warn">${warnings.join(', ')}</span>` : '<span class="badge badge-green">Sicher</span>'}
     </div>
   </div>`;
 }
@@ -1877,7 +1877,7 @@ function openExerciseDetail(exId) {
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <span class="badge badge-blue">${ex.cat}</span>
           <span class="badge badge-gray">${ex.eq}</span>
-          ${risky ? `<span class="badge badge-warn">⚠ ${warnings.join(', ')}</span>` : '<span class="badge badge-green">✓ Keine Risikogelenke</span>'}
+          ${risky ? `<span class="badge badge-warn">${warnings.join(', ')}</span>` : '<span class="badge badge-green">Keine Risikogelenke</span>'}
         </div>
       </div>
     </div>
@@ -2064,8 +2064,8 @@ function renderInjuryCard(inj) {
       </div>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-ghost btn-sm" onclick="openInjuryEditor('${inj.id}')">Bearbeiten</button>
-        ${inj.active ? `<button class="btn btn-success btn-sm" onclick="healInjury('${inj.id}')">✓ Geheilt</button>` : ''}
-        <button class="btn btn-danger btn-sm" onclick="deleteInjury('${inj.id}')">✕</button>
+        ${inj.active ? `<button class="btn btn-success btn-sm" onclick="healInjury('${inj.id}')">Geheilt</button>` : ''}
+        <button class="btn btn-danger btn-sm" onclick="deleteInjury('${inj.id}')">×</button>
       </div>
     </div>
     <div class="injury-meta">
