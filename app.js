@@ -243,7 +243,7 @@ function toggleSidebar() {
   sidebar.classList.toggle('collapsed');
 }
 
-const MORE_VIEWS = ['plans', 'library', 'injuries'];
+const MORE_VIEWS = ['progress', 'library', 'injuries'];
 
 function navigate(view) {
   state.view = view;
