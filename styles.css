@@ -385,6 +385,38 @@ tr:last-child td { border-bottom: none; }
 .mt-16 { margin-top: 16px; }
 .mb-16 { margin-bottom: 16px; }
 .no-data { text-align: center; padding: 30px; color: var(--text3); font-size: 13px; }
+.section-title { font-size: 15px; font-weight: 700; color: var(--text); }
+
+/* ===== THEME PICKER ===== */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+}
+.theme-card {
+  position: relative; background: none; border: 2px solid var(--border);
+  border-radius: var(--radius); cursor: pointer; padding: 0;
+  transition: border-color var(--transition), transform var(--transition);
+  text-align: center; overflow: visible;
+}
+.theme-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.theme-card-active { border-color: var(--accent); }
+.theme-card-preview {
+  height: 72px; border-radius: calc(var(--radius) - 2px) calc(var(--radius) - 2px) 0 0;
+  overflow: hidden; position: relative;
+}
+.theme-card-bar { height: 18px; width: 100%; }
+.theme-card-body { flex: 1; height: 54px; padding: 8px; position: relative; }
+.theme-card-name {
+  font-size: 11px; font-weight: 600; padding: 7px 4px 8px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.theme-card-check {
+  position: absolute; top: -8px; right: -8px;
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
 
 /* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar { width: 6px; height: 6px; }

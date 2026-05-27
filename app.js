@@ -2253,26 +2253,165 @@ function escHtml(str) {
 }
 
 // ============================================================
+// THEMES
+// ============================================================
+const THEMES = {
+  'rot-schwarz': {
+    name: 'Rot Schwarz',
+    '--bg':       '#12121f', '--bg2':      '#1a1a2e', '--bg3':      '#20203a',
+    '--surface':  '#252545', '--surface2': '#2e2e52', '--border':   '#33335a',
+    '--accent':   '#e94560', '--accent2':  '#c73652',
+    '--text':     '#f0f0ff', '--text2':    '#a0a0c0', '--text3':    '#60607a',
+    '--shadow':   '0 4px 24px rgba(0,0,0,0.4)',
+  },
+  'rot-weiss': {
+    name: 'Rot Weiss',
+    '--bg':       '#f5f5fa', '--bg2':      '#ffffff', '--bg3':      '#ededf5',
+    '--surface':  '#ffffff', '--surface2': '#f5f5fa', '--border':   '#ddddf0',
+    '--accent':   '#e94560', '--accent2':  '#c73652',
+    '--text':     '#1a1a2e', '--text2':    '#5a5a7a', '--text3':    '#9090b0',
+    '--shadow':   '0 4px 24px rgba(0,0,0,0.08)',
+  },
+  'blau-schwarz': {
+    name: 'Blau Schwarz',
+    '--bg':       '#0d1117', '--bg2':      '#161b22', '--bg3':      '#1c2230',
+    '--surface':  '#21262d', '--surface2': '#2a3240', '--border':   '#30363d',
+    '--accent':   '#4f8ef7', '--accent2':  '#2563eb',
+    '--text':     '#e6edf3', '--text2':    '#8b949e', '--text3':    '#484f58',
+    '--shadow':   '0 4px 24px rgba(0,0,0,0.4)',
+  },
+  'blau-weiss': {
+    name: 'Blau Weiss',
+    '--bg':       '#f0f4ff', '--bg2':      '#ffffff', '--bg3':      '#e8eeff',
+    '--surface':  '#ffffff', '--surface2': '#f0f4ff', '--border':   '#d0dcff',
+    '--accent':   '#2563eb', '--accent2':  '#1d4ed8',
+    '--text':     '#0d1117', '--text2':    '#4a5568', '--text3':    '#9090b0',
+    '--shadow':   '0 4px 24px rgba(0,0,0,0.08)',
+  },
+  'gruen-blau': {
+    name: 'Grün Blau',
+    '--bg':       '#0a1628', '--bg2':      '#0f1f3a', '--bg3':      '#142848',
+    '--surface':  '#192d52', '--surface2': '#1e3560', '--border':   '#2a4470',
+    '--accent':   '#00c9a7', '--accent2':  '#00a88c',
+    '--text':     '#e0f0ff', '--text2':    '#7090b0', '--text3':    '#406080',
+    '--shadow':   '0 4px 24px rgba(0,0,0,0.5)',
+  },
+};
+
+const THEME_VARS = ['--bg','--bg2','--bg3','--surface','--surface2','--border',
+                    '--accent','--accent2','--text','--text2','--text3','--shadow'];
+
+function applyTheme(id) {
+  const t = THEMES[id] || THEMES['rot-schwarz'];
+  const root = document.documentElement;
+  THEME_VARS.forEach(v => root.style.setProperty(v, t[v]));
+  localStorage.setItem('tp_theme', id);
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem('tp_theme');
+  if (saved && THEMES[saved]) applyTheme(saved);
+}
+
+// Sofort beim Skriptstart anwenden (vor DOMContentLoaded)
+loadTheme();
+
+// ============================================================
 // EINSTELLUNGEN
 // ============================================================
 function renderSettings() {
-  const el = document.getElementById('content');
+  const el   = document.getElementById('content');
   const user = state.currentUser;
+  const currentTheme = localStorage.getItem('tp_theme') || 'rot-schwarz';
+  const username = user?.displayName || user?.email?.split('@')[0].replace(/_/g,' ') || '–';
+
+  const themeCards = Object.entries(THEMES).map(([id, t]) => {
+    const active = id === currentTheme;
+    return `<button class="theme-card ${active ? 'theme-card-active' : ''}"
+        onclick="applyTheme('${id}');renderSettings()"
+        style="--tc-bg:${t['--bg']};--tc-surface:${t['--surface']};--tc-accent:${t['--accent']};--tc-text:${t['--text']};">
+      <div class="theme-card-preview">
+        <div class="theme-card-bar" style="background:${t['--bg2']};border-bottom:2px solid ${t['--accent']};"></div>
+        <div class="theme-card-body" style="background:${t['--bg']};">
+          <div style="width:55%;height:8px;border-radius:3px;background:${t['--surface']};margin-bottom:5px;"></div>
+          <div style="width:75%;height:6px;border-radius:3px;background:${t['--surface']};margin-bottom:5px;opacity:.7;"></div>
+          <div style="width:40%;height:6px;border-radius:3px;background:${t['--surface']};opacity:.5;"></div>
+          <div style="position:absolute;bottom:8px;right:8px;width:22px;height:22px;border-radius:50%;background:${t['--accent']};"></div>
+        </div>
+      </div>
+      <div class="theme-card-name" style="color:var(--text);">${t.name}</div>
+      ${active ? `<div class="theme-card-check" style="background:var(--accent);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" style="width:12px;height:12px;"><path d="M5 13l4 4L19 7"/></svg>
+      </div>` : ''}
+    </button>`;
+  }).join('');
+
   el.innerHTML = `
     <div class="page-header">
       <h1 class="page-title">Einstellungen</h1>
     </div>
-    <div class="card" style="max-width:600px;">
-      <div style="padding:32px;text-align:center;color:var(--text2);">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-          style="width:48px;height:48px;margin-bottom:16px;color:var(--text3);">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
-        </svg>
-        <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;">Einstellungen kommen bald</div>
-        <div style="font-size:13px;">Angemeldet als <strong>${escHtml(user?.displayName || user?.email || '–')}</strong></div>
+
+    <!-- Profil -->
+    <div class="card mb-16" style="max-width:600px;">
+      <div class="card-header">
+        <h2 class="section-title">Konto</h2>
       </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:4px 0 16px;">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;">
+          ${escHtml(username.charAt(0).toUpperCase())}
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:15px;">${escHtml(username)}</div>
+          <div style="font-size:12px;color:var(--text2);">Angemeldet</div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="authLogout()">Abmelden</button>
+        <button class="btn btn-danger" onclick="confirmDeleteUser()">Konto löschen</button>
+      </div>
+    </div>
+
+    <!-- Design -->
+    <div class="card" style="max-width:600px;">
+      <div class="card-header">
+        <h2 class="section-title">Design</h2>
+      </div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Wähle eine Farbkombination für die App.</p>
+      <div class="theme-grid">${themeCards}</div>
     </div>`;
+}
+
+function confirmDeleteUser() {
+  openModal(`
+    <div class="modal-title" style="color:var(--danger);">Konto löschen</div>
+    <p style="margin:16px 0;color:var(--text2);font-size:14px;line-height:1.6;">
+      Dein Konto und alle gespeicherten Daten werden <strong style="color:var(--text);">dauerhaft gelöscht</strong>.
+      Diese Aktion kann nicht rückgängig gemacht werden.
+    </p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-danger" onclick="deleteCurrentUser()">Ja, Konto löschen</button>
+    </div>`);
+}
+
+async function deleteCurrentUser() {
+  closeModal();
+  const user = auth.currentUser;
+  if (!user) return;
+  try {
+    // Firestore-Daten löschen
+    await db.doc(`users/${user.uid}`).delete();
+    // Firebase Auth-User löschen
+    await user.delete();
+    toast('Konto wurde gelöscht.', 'success');
+  } catch(e) {
+    if (e.code === 'auth/requires-recent-login') {
+      toast('Bitte melde dich erneut an und versuche es dann nochmal.', 'error');
+      authLogout();
+    } else {
+      toast('Fehler beim Löschen: ' + e.message, 'error');
+    }
+  }
 }
 
 // ============================================================
