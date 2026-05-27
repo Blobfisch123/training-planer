@@ -548,7 +548,10 @@ select.form-control { min-height: 48px; }
   display: none;
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
   background: var(--bg2); border-top: 1px solid var(--border);
-  padding-bottom: env(safe-area-inset-bottom);
+  /* Innenabstand unten = Home-Indikator-Bereich, Leiste selbst bleibt am Rand */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Kein margin, kein transform – bündig am unteren Bildschirmrand */
+  margin: 0; transform: none;
 }
 .bottom-nav-item {
   flex: 1; display: flex; flex-direction: column;
@@ -604,11 +607,11 @@ select.form-control { min-height: 48px; }
      Notch (iPhone X–13):             ~44 pt
      Kein Ausschnitt:                   0 pt  */
 
-  /* Content: top = Dynamic Island, bottom = Home-Indikator + Bottom-Nav */
+  /* Content: top = Dynamic Island, bottom = Bottom-Nav-Höhe (56px) + Home-Indikator */
   #content {
-    padding: calc(16px + env(safe-area-inset-top))
+    padding: calc(16px + env(safe-area-inset-top, 0px))
              16px
-             calc(72px + env(safe-area-inset-bottom));
+             calc(56px + 16px + env(safe-area-inset-bottom, 0px));
   }
 
   /* Loading screen: zentriert, aber nicht hinter die Insel */
@@ -650,8 +653,8 @@ select.form-control { min-height: 48px; }
   .day-actions { width: 100%; min-width: 0 !important; margin-left: 0; }
   .day-actions select { min-width: 0 !important; min-height: 40px; width: 100%; }
 
-  /* Prevent horizontal overflow */
-  body { overflow-x: hidden; }
+  /* Prevent horizontal overflow — KEIN overflow auf body/html,
+     sonst verschiebt sich position:fixed (bekannter CSS-Bug) */
   .main-content { overflow-x: hidden; }
-  #content { overflow-x: hidden; }
+  #content { overflow-x: hidden; max-width: 100vw; }
 }
