@@ -78,9 +78,15 @@ function getDefaultData() {
            customExercises: [], customDayTypes: [...DEFAULT_DAY_TYPES], planFolders: [] };
 }
 
+function stripEmojis(str) {
+  return (str || '').replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, '').trim();
+}
+
 function migrateData(d) {
   if (!d.customDayTypes) d.customDayTypes = [...DEFAULT_DAY_TYPES];
   if (!d.planFolders)    d.planFolders    = [];
+  // Bereinige Emojis aus gespeicherten Tagestyp-Labels
+  d.customDayTypes = d.customDayTypes.map(t => ({ ...t, label: stripEmojis(t.label) }));
   if (d.weekSchedule) {
     const keys = Object.keys(d.weekSchedule);
     if (keys.length > 0 && keys.every(k => /^[0-6]$/.test(k))) {
