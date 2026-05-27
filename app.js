@@ -64,8 +64,8 @@ const DAYS = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','S
 const DB_KEY = 'trainingPlanerData';
 
 const DEFAULT_DAY_TYPES = [
-  { id: 'ON_FIELD', label: '🏟 On Field Practice', color: '#00c9a7' },
-  { id: 'COACHING', label: '📋 Coaching',          color: '#a78bfa' },
+  { id: 'ON_FIELD', label: 'On Field Practice', color: '#00c9a7' },
+  { id: 'COACHING', label: 'Coaching',          color: '#a78bfa' },
 ];
 
 function getSpecialDay(id) {
@@ -454,7 +454,7 @@ function renderDashboard() {
         ${activeInj.length ? `
           <div class="card" style="border-color:var(--warn);">
             <div class="card-header">
-              <div class="card-title">⚠ Aktive Verletzungen</div>
+              <div class="card-title">Aktive Verletzungen</div>
               <button class="btn btn-ghost btn-sm" onclick="navigate('injuries')">Alle</button>
             </div>
             ${activeInj.slice(0,3).map(inj => `
@@ -515,11 +515,11 @@ function renderPlans() {
         <div class="folder-header" onclick="toggleFolder('${folder.id}')">
           <span class="folder-chevron ${isOpen ? 'open' : ''}">▶</span>
           <span class="folder-color-dot" style="background:${folder.color};"></span>
-          <span class="folder-name">📁 ${escHtml(folder.name)}</span>
+          <span class="folder-name">${escHtml(folder.name)}</span>
           <span class="folder-count">${folderPlans.length} ${folderPlans.length === 1 ? 'Plan' : 'Pläne'}</span>
           <div class="folder-actions" onclick="event.stopPropagation()">
-            <button class="btn btn-ghost btn-sm" onclick="openFolderModal('${folder.id}')">✏️</button>
-            <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="deletePlanFolder('${folder.id}')">🗑</button>
+            <button class="btn btn-ghost btn-sm" onclick="openFolderModal('${folder.id}')">Bearbeiten</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="deletePlanFolder('${folder.id}')">Löschen</button>
           </div>
         </div>
         <div class="folder-plans ${isOpen ? '' : 'collapsed'}">
@@ -536,7 +536,7 @@ function renderPlans() {
       <div class="folder-header" onclick="toggleFolder('__none__')">
         <span class="folder-chevron ${!state.collapsedFolders.has('__none__') ? 'open' : ''}">▶</span>
         <span class="folder-color-dot" style="background:var(--text3);"></span>
-        <span class="folder-name">📁 Ohne Ordner</span>
+        <span class="folder-name">Ohne Ordner</span>
         <span class="folder-count">${unfoldered.length} ${unfoldered.length === 1 ? 'Plan' : 'Pläne'}</span>
       </div>
       <div class="folder-plans ${!state.collapsedFolders.has('__none__') ? '' : 'collapsed'}">
@@ -602,7 +602,7 @@ function renderPlanCard(plan, folders) {
       ${folders.length > 0 ? `
         <select class="form-control" style="font-size:12px;padding:4px 6px;flex:1;"
           onchange="movePlanToFolder('${plan.id}', this.value)">
-          <option value="">📁 Ordner…</option>
+          <option value="">Ordner…</option>
           <option value="__none__" ${!plan.folderId ? 'selected':''}>Ohne Ordner</option>
           ${folderOptions}
         </select>` : ''}
@@ -626,35 +626,35 @@ function getPlanSuggestions(exList) {
   const isLegs = has('Beine') || has('Gesäß');
 
   if (has('Brust') && !has('Trizeps'))
-    tips.push({ type:'tip', text:'💡 Trizeps-Übungen passen gut dazu — Brust-Training beansprucht ihn bereits stark (Push-Tag).' });
+    tips.push({ type:'tip', text:'Trizeps-Übungen passen gut dazu — Brust-Training beansprucht ihn bereits stark (Push-Tag).' });
   if (has('Brust') && !has('Schulter') && !has('Trizeps'))
-    tips.push({ type:'tip', text:'💡 Schulter-Übungen ergänzen Brust-Training zum klassischen Push-Tag.' });
+    tips.push({ type:'tip', text:'Schulter-Übungen ergänzen Brust-Training zum klassischen Push-Tag.' });
   if (has('Rücken') && !has('Bizeps'))
-    tips.push({ type:'tip', text:'💡 Bizeps-Curls passen gut dazu — Rücken-Züge beanspruchen den Bizeps (Pull-Tag).' });
+    tips.push({ type:'tip', text:'Bizeps-Curls passen gut dazu — Rücken-Züge beanspruchen den Bizeps (Pull-Tag).' });
   if ((has('Schulter') || has('Trizeps')) && !has('Brust'))
-    tips.push({ type:'tip', text:'💡 Brust-Übungen ergänzen Schulter/Trizeps zum vollständigen Push-Tag.' });
+    tips.push({ type:'tip', text:'Brust-Übungen ergänzen Schulter/Trizeps zum vollständigen Push-Tag.' });
   if (has('Beine') && !has('Gesäß'))
-    tips.push({ type:'tip', text:'💡 Gesäß-Übungen (z.B. Hip Thrusts, Romanian Deadlift) ergänzen Beintraining gut.' });
+    tips.push({ type:'tip', text:'Gesäß-Übungen (z.B. Hip Thrusts, Romanian Deadlift) ergänzen Beintraining gut.' });
 
   if (exList.length > 8)
-    tips.push({ type:'warn', text:'⚠ Mehr als 8 Übungen pro Einheit — Qualität vor Quantität, lieber Volumen auf zwei Tage aufteilen.' });
+    tips.push({ type:'warn', text:'Mehr als 8 Übungen pro Einheit — Qualität vor Quantität, lieber Volumen auf zwei Tage aufteilen.' });
 
   const bigGroups = ['Brust','Rücken','Beine'].filter(m => muscles.has(m));
   if (isPush && isPull && isLegs)
-    tips.push({ type:'rest', text:'🛌 Fullbody-Einheit: Danach mindestens 1–2 Ruhetage einplanen damit sich alle Muskelgruppen erholen.' });
+    tips.push({ type:'rest', text:'Fullbody-Einheit: Danach mindestens 1–2 Ruhetage einplanen damit sich alle Muskelgruppen erholen.' });
   else if (isPush && isPull)
-    tips.push({ type:'rest', text:'🛌 Push + Pull kombiniert ist intensiv — plane einen Ruhetag oder Bein-Tag danach.' });
+    tips.push({ type:'rest', text:'Push + Pull kombiniert ist intensiv — plane einen Ruhetag oder Bein-Tag danach.' });
   else if (bigGroups.length >= 2)
-    tips.push({ type:'rest', text:`🛌 ${bigGroups.join(' & ')} brauchen 48–72h Erholung — trainiere sie nicht an zwei aufeinanderfolgenden Tagen.` });
+    tips.push({ type:'rest', text:`${bigGroups.join(' & ')} brauchen 48–72h Erholung — trainiere sie nicht an zwei aufeinanderfolgenden Tagen.` });
   else if (bigGroups.length === 1)
-    tips.push({ type:'rest', text:`🛌 ${bigGroups[0]} braucht 48h Erholung — nicht an zwei Tagen hintereinander trainieren.` });
+    tips.push({ type:'rest', text:`${bigGroups[0]} braucht 48h Erholung — nicht an zwei Tagen hintereinander trainieren.` });
 
   if (isPush && !isPull && !isLegs)
-    tips.push({ type:'split', text:'📅 Push-Tag. Klassischer Split-Vorschlag: Push → Pull → Beine → Ruhetag.' });
+    tips.push({ type:'split', text:'Push-Tag. Klassischer Split-Vorschlag: Push → Pull → Beine → Ruhetag.' });
   else if (isPull && !isPush && !isLegs)
-    tips.push({ type:'split', text:'📅 Pull-Tag. Klassischer Split-Vorschlag: Pull → Beine → Ruhetag → Push.' });
+    tips.push({ type:'split', text:'Pull-Tag. Klassischer Split-Vorschlag: Pull → Beine → Ruhetag → Push.' });
   else if (isLegs && !isPush && !isPull)
-    tips.push({ type:'split', text:'📅 Bein-Tag. Nach intensivem Beintraining empfiehlt sich ein Ruhetag oder ein leichter Oberkörper-Tag.' });
+    tips.push({ type:'split', text:'Bein-Tag. Nach intensivem Beintraining empfiehlt sich ein Ruhetag oder ein leichter Oberkörper-Tag.' });
 
   return tips;
 }
@@ -750,7 +750,7 @@ function renderPlanExerciseRow(ex, idx) {
             <div><div class="set-label">Pause (s)</div><input class="set-input" type="number" min="0" step="15" value="${ex.restTime||90}" onchange="updatePlanEx(${idx},'restTime',this.value)"></div>`;
         })()}
       </div>
-      ${ex.notes ? `<div style="font-size:12px;color:var(--text2);margin-top:6px;">📝 ${escHtml(ex.notes)}</div>` : ''}
+      ${ex.notes ? `<div style="font-size:12px;color:var(--text2);margin-top:6px;">${escHtml(ex.notes)}</div>` : ''}
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;">
       ${idx > 0 ? `<button class="btn btn-ghost btn-icon" onclick="movePlanEx(${idx},-1)" title="Nach oben">▲</button>` : ''}
@@ -1198,7 +1198,7 @@ function openAddDayTypeModal() {
     <div class="modal-title">Neuen Tagestyp erstellen</div>
     <div class="form-group">
       <label class="form-label">Name (inkl. Emoji)</label>
-      <input class="form-control" id="dt-label" placeholder="z.B. 🏃 Lauftraining">
+      <input class="form-control" id="dt-label" placeholder="z.B. Lauftraining">
     </div>
     <div class="form-group">
       <label class="form-label">Farbe</label>
@@ -1370,7 +1370,7 @@ function renderPlanPreview(planId) {
       meta = `${ex.sets||3} × ${ex.reps||'8–12'}${ex.weight ? ' · ' + ex.weight + ' kg' : ''}`;
     }
     return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">
-      <span style="font-size:16px;">${risky ? '⚠️' : '💪'}</span>
+      <span style="width:8px;height:8px;border-radius:50%;background:${risky?'var(--warn)':'var(--accent)'};flex-shrink:0;display:inline-block;"></span>
       <div style="flex:1;min-width:0;">
         <div style="font-size:14px;font-weight:600;${risky?'color:var(--warn);':''}">${escHtml(exDef.name)}</div>
         <div style="font-size:12px;color:var(--text2);margin-top:1px;">${meta}</div>
@@ -1541,7 +1541,7 @@ function finishWorkout() {
   dbSave(state.data);
   state.activeWorkout = null;
   state.workoutStartTime = null;
-  toast('Training gespeichert! 💪', 'success');
+  toast('Training gespeichert!', 'success');
   navigate('dashboard');
 }
 
@@ -2037,7 +2037,7 @@ function renderInjuries() {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         </svg>
-        <p>Keine Verletzungen eingetragen. Bleib verletzungsfrei! 💪</p>
+        <p>Keine Verletzungen eingetragen. Bleib verletzungsfrei!</p>
       </div>
     ` : ''}
     ${active.length ? `
@@ -2071,7 +2071,7 @@ function renderInjuryCard(inj) {
     <div class="injury-meta">
       <span class="badge ${sevColor[inj.severity]||'badge-gray'}">${inj.severity}</span>
       <span>Seit: ${formatDate(inj.startDate)}</span>
-      ${inj.notes ? `<span>📝 ${escHtml(inj.notes)}</span>` : ''}
+      ${inj.notes ? `<span>${escHtml(inj.notes)}</span>` : ''}
     </div>
     ${riskyExercises.length ? `
       <div style="margin-top:12px;">
@@ -2166,7 +2166,7 @@ function healInjury(injId) {
   if (!inj) return;
   inj.active = false;
   dbSave(state.data);
-  toast('Verletzung als geheilt markiert! 🎉','success');
+  toast('Verletzung als geheilt markiert!','success');
   renderInjuries();
   updateInjuryBadge();
 }
