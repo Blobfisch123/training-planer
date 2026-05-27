@@ -1329,20 +1329,60 @@ function renderWorkoutPicker(plans, todayPlanIds) {
   // Pre-select: first today's plan if available, otherwise first plan
   const defaultId = todayPlanIds.length > 0 ? todayPlanIds[0] : plans[0].id;
   return `
-    <div class="card" style="max-width:500px;">
+    <div class="card" style="max-width:520px;">
       <div class="form-group">
         <label class="form-label">Plan auswählen</label>
-        <select class="form-control" id="workout-plan-select">
+        <select class="form-control" id="workout-plan-select" onchange="updateWorkoutPreview(this.value)">
           ${todayPlanIds.length > 0 ? `<optgroup label="── Heute geplant ──">${todayPlanIds.map(id => { const p = getPlan(id); return p ? `<option value="${p.id}" ${p.id===defaultId?'selected':''}>${escHtml(p.name)}</option>` : ''; }).join('')}</optgroup>` : ''}
           <optgroup label="── Alle Pläne ──">${plans.filter(p => !todayPlanIds.includes(p.id)).map(p => `<option value="${p.id}">${escHtml(p.name)}</option>`).join('')}</optgroup>
         </select>
       </div>
+
+      <!-- Planvorschau -->
+      <div id="workout-plan-preview" style="margin-bottom:20px;">
+        ${renderPlanPreview(defaultId)}
+      </div>
+
       <button class="btn btn-primary" style="width:100%;" onclick="startWorkout()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         Training beginnen
       </button>
     </div>
   `;
+}
+
+function renderPlanPreview(planId) {
+  const plan = getPlan(planId);
+  if (!plan || !(plan.exercises||[]).length) {
+    return `<div style="color:var(--text3);font-size:13px;padding:6px 0;">Keine Übungen in diesem Plan.</div>`;
+  }
+  const rows = plan.exercises.map(ex => {
+    const exDef = getExercise(ex.exerciseId);
+    if (!exDef) return '';
+    const type  = getTrackingType(exDef);
+    const risky = isExerciseRisky(exDef);
+    let meta;
+    if (type === 'cardio') {
+      meta = `${ex.sets||1} × ${ex.targetDistance||0} km / ${ex.targetDuration||0} min`;
+    } else if (type === 'timed') {
+      meta = `${ex.sets||3} × ${ex.targetDuration||60} s`;
+    } else {
+      meta = `${ex.sets||3} × ${ex.reps||'8–12'}${ex.weight ? ' · ' + ex.weight + ' kg' : ''}`;
+    }
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:16px;">${risky ? '⚠️' : '💪'}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:600;${risky?'color:var(--warn);':''}">${escHtml(exDef.name)}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:1px;">${meta}</div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div style="border-top:1px solid var(--border);">${rows}</div>`;
+}
+
+function updateWorkoutPreview(planId) {
+  const el = document.getElementById('workout-plan-preview');
+  if (el) el.innerHTML = renderPlanPreview(planId);
 }
 
 function startWorkout() {
